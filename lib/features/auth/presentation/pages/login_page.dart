@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
- 
- 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -29,6 +27,8 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       body: SafeArea(
+        top: false,
+        bottom: true,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
@@ -73,7 +73,9 @@ class _LoginPageState extends State<LoginPage> {
                     suffix: IconButton(
                       onPressed: () => setState(() => _obscure = !_obscure),
                       icon: Icon(
-                        _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        _obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
                       tooltip: _obscure ? 'Mostrar senha' : 'Ocultar senha',
                     ),
@@ -84,7 +86,8 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Checkbox(
                         value: _rememberMe,
-                        onChanged: (v) => setState(() => _rememberMe = v ?? true),
+                        onChanged: (v) =>
+                            setState(() => _rememberMe = v ?? true),
                       ),
                       Expanded(
                         child: Text(
@@ -227,9 +230,7 @@ class _DividerRow extends StatelessWidget {
 
     return Row(
       children: [
-        Expanded(
-          child: Divider(color: theme.colorScheme.outlineVariant),
-        ),
+        Expanded(child: Divider(color: theme.colorScheme.outlineVariant)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
@@ -239,9 +240,7 @@ class _DividerRow extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
-          child: Divider(color: theme.colorScheme.outlineVariant),
-        ),
+        Expanded(child: Divider(color: theme.colorScheme.outlineVariant)),
       ],
     );
   }
@@ -289,7 +288,9 @@ class _TextField extends StatelessWidget {
             prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
             suffixIcon: suffix,
             filled: true,
-            fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.55),
+            fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+              0.55,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
@@ -300,9 +301,15 @@ class _TextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.6),
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary,
+                width: 1.6,
+              ),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
           ),
         ),
       ],
