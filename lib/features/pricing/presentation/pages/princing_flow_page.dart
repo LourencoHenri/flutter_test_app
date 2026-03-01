@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_test_app/core/state/products_state.dart';
+import 'package:flutter_test_app/features/home/domain/models/product.dart';
+import 'steps/step_product.dart';
+import 'steps/step_materials.dart';
+import 'steps/step_labor.dart';
+import 'steps/step_operational.dart';
+import 'steps/step_summary.dart';
 
-/// Pricing Flow Page (UI-only)
-/// Multi-step wizard using PageView:
-/// 1) Product
-/// 2) Materials
-/// 3) Labor
-/// 4) Operational Cost
-/// 5) Summary
 class PricingFlowPage extends StatefulWidget {
   const PricingFlowPage({super.key});
 
@@ -20,10 +20,58 @@ class _PricingFlowPageState extends State<PricingFlowPage> {
   final PageController _pageCtrl = PageController();
   int _stepIndex = 0;
 
+  // Step 1 Controllers
+  final TextEditingController _nameCtrl = TextEditingController();
+  final TextEditingController _descriptionCtrl = TextEditingController();
+
+  // Step 2 Controllers
+  final List<MaterialInput> _materialInputs = [];
+
+  // Step 3 Controllers
+  final TextEditingController _laborHoursCtrl = TextEditingController();
+  final TextEditingController _laborRateCtrl = TextEditingController();
+
+  // Step 4 Controllers
+  final List<OperationalInput> _operationalInputs = [];
+
   @override
   void dispose() {
     _pageCtrl.dispose();
+    _nameCtrl.dispose();
+    _descriptionCtrl.dispose();
+    for (var m in _materialInputs) {
+      m.dispose();
+    }
+    _laborHoursCtrl.dispose();
+    _laborRateCtrl.dispose();
+    for (var o in _operationalInputs) {
+      o.dispose();
+    }
     super.dispose();
+  }
+
+  double get _materialsTotal {
+    double total = 0;
+    for (var m in _materialInputs) {
+      final q = double.tryParse(m.quantity.text) ?? 0;
+      final p = double.tryParse(m.price.text) ?? 0;
+      total += q * p;
+    }
+    return total;
+  }
+
+  double get _laborTotal {
+    final h = double.tryParse(_laborHoursCtrl.text) ?? 0;
+    final r = double.tryParse(_laborRateCtrl.text) ?? 0;
+    return h * r;
+  }
+
+  double get _operationalTotal {
+    double total = 0;
+    for (var o in _operationalInputs) {
+      total += double.tryParse(o.value.text) ?? 0;
+    }
+    return total;
   }
 
   Future<void> _goTo(int index) async {
@@ -39,9 +87,37 @@ class _PricingFlowPageState extends State<PricingFlowPage> {
     if (_stepIndex < _totalSteps - 1) {
       _goTo(_stepIndex + 1);
     } else {
-      // UI-only: final action could be "Save"
-      Navigator.of(context).maybePop();
+      _saveProduct();
     }
+  }
+
+  void _saveProduct() {
+    final newProduct = Product(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: _nameCtrl.text.isEmpty ? 'Novo Produto' : _nameCtrl.text,
+      description: _descriptionCtrl.text,
+      materials: _materialInputs.map((m) {
+        return MaterialItem(
+          name: m.name.text,
+          quantity: double.tryParse(m.quantity.text) ?? 0,
+          unitPrice: double.tryParse(m.price.text) ?? 0,
+        );
+      }).toList(),
+      labor: Labor(
+        hours: double.tryParse(_laborHoursCtrl.text) ?? 0,
+        hourlyRate: double.tryParse(_laborRateCtrl.text) ?? 0,
+      ),
+      operationalCosts: _operationalInputs.map((o) {
+        return OperationalCost(
+          label: o.label.text,
+          value: double.tryParse(o.value.text) ?? 0,
+        );
+      }).toList(),
+      finalPrice: _materialsTotal + _laborTotal + _operationalTotal,
+    );
+
+    ProductsState().addProduct(newProduct);
+    Navigator.of(context).pop();
   }
 
   void _back() {
@@ -158,31 +234,36 @@ class _PricingFlowPageState extends State<PricingFlowPage> {
                 controller: _pageCtrl,
                 physics: const NeverScrollableScrollPhysics(), // wizard feel
                 onPageChanged: (i) => setState(() => _stepIndex = i),
-                children: const [
-                  _StepPlaceholder(
-                    title: 'Step 1 — Product',
-                    subtitle: 'Add image, name and description.',
-                    icon: Icons.photo_camera_outlined,
+                children: [
+                  StepProduct(
+                    nameController: _nameCtrl,
+                    descriptionController: _descriptionCtrl,
                   ),
-                  _StepPlaceholder(
-                    title: 'Step 2 — Materials',
-                    subtitle: 'Add materials and quantities.',
-                    icon: Icons.inventory_2_outlined,
+                  StepMaterials(
+                    materialInputs: _materialInputs,
+                    onAdd: () => setState(() => _materialInputs.add(MaterialInput())),
+                    onRemove: (idx) => setState(() {
+                      _materialInputs[idx].dispose();
+                      _materialInputs.removeAt(idx);
+                    }),
                   ),
-                  _StepPlaceholder(
-                    title: 'Step 3 — Labor',
-                    subtitle: 'Set time and hourly rate.',
-                    icon: Icons.timer_outlined,
+                  StepLabor(
+                    hoursController: _laborHoursCtrl,
+                    rateController: _laborRateCtrl,
                   ),
-                  _StepPlaceholder(
-                    title: 'Step 4 — Operational Cost',
-                    subtitle: 'Add packaging, fees, energy, etc.',
-                    icon: Icons.receipt_long_outlined,
+                  StepOperational(
+                    inputs: _operationalInputs,
+                    onAdd: () => setState(() => _operationalInputs.add(OperationalInput())),
+                    onRemove: (idx) => setState(() {
+                      _operationalInputs[idx].dispose();
+                      _operationalInputs.removeAt(idx);
+                    }),
                   ),
-                  _StepPlaceholder(
-                    title: 'Step 5 — Summary',
-                    subtitle: 'Review totals and confirm.',
-                    icon: Icons.check_circle_outline,
+                  StepSummary(
+                    productName: _nameCtrl.text,
+                    materialsTotal: _materialsTotal,
+                    laborTotal: _laborTotal,
+                    operationalTotal: _operationalTotal,
                   ),
                 ],
               ),
@@ -228,65 +309,6 @@ class _PricingFlowPageState extends State<PricingFlowPage> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Simple placeholder for UI-only steps.
-/// Later you replace these with:
-/// StepProduct(), StepMaterials(), StepLabor(), StepOperationalCost(), StepSummary()
-class _StepPlaceholder extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  const _StepPlaceholder({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.65),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 44, color: Colors.black.withOpacity(0.55)),
-                const SizedBox(height: 14),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.35,
-                    color: Colors.black.withOpacity(0.60),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

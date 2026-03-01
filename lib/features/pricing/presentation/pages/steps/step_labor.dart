@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class StepProduct extends StatelessWidget {
-  final TextEditingController nameController;
-  final TextEditingController descriptionController;
+class StepLabor extends StatelessWidget {
+  final TextEditingController hoursController;
+  final TextEditingController rateController;
 
-  const StepProduct({
+  const StepLabor({
     super.key,
-    required this.nameController,
-    required this.descriptionController,
+    required this.hoursController,
+    required this.rateController,
   });
 
   @override
@@ -18,14 +18,15 @@ class StepProduct extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Informações Básicas',
+            'Mão de Obra e Tempo',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: nameController,
+            controller: hoursController,
+            keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: 'Nome do Produto',
+              labelText: 'Tempo gasto (horas)',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -35,16 +36,21 @@ class StepProduct extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: descriptionController,
-            maxLines: 3,
+            controller: rateController,
+            keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: 'Descrição (opcional)',
+              labelText: 'Taxa Horária (R\$/hora)',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
               fillColor: Colors.white,
             ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Sugestão: calcule o seu salário mensal desejado dividido pela quantidade de horas trabalhadas por mês.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
       ),
